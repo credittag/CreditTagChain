@@ -1,0 +1,1 @@
+The folders contain the CTC wallet applications for windows/mac/linux. They can be run by command line. Interface and commands can be found in the guidance.
