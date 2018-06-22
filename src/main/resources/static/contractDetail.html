@@ -1,0 +1,267 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport"
+	content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+<meta name="format-detection" content="telephone=no" />
+<meta http-equiv="expires" content="-1" />
+<meta http-equiv="pragma" content="no-cache" />
+<meta http-equiv="cache-control" content="no-cache" />
+<link href="./css2.0/line-icon.css" rel="stylesheet" />
+<link
+	href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"
+	rel="stylesheet"></link>
+<link rel="shortcut icon" href="/favicon.ico"/>
+<style>
+html {
+	position: relative;
+}
+
+body, html {
+	min-height: 100%;
+}
+
+.null-tip {
+	color: #888;
+}
+
+/* This is a compiled file, you should be editing the file in the templates directory */
+.pace {
+	-webkit-pointer-events: none;
+	pointer-events: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+}
+
+.pace-inactive {
+	display: none;
+}
+
+.pace .pace-progress {
+	background: #ffffff;
+	position: fixed;
+	z-index: 2000;
+	top: 0;
+	right: 100%;
+	width: 100%;
+	height: 2px;
+}
+
+.form-control::-moz-placeholder {
+	color: #ffffff;
+	opacity: 1
+}
+
+.form-control:-ms-input-placeholder {
+	color: #ffffff
+}
+
+.form-control::-webkit-input-placeholder {
+	color: #ffffff
+}
+</style>
+
+<link href="./css2.0/app.2198e3e90bfa1dd6114d69c72465c7a6.css"
+	rel="stylesheet"></link>
+	<link rel="stylesheet" href="css2.0/initialize.css"/>
+<link rel="stylesheet" href="css2.0/Ken.css"/>
+<title>Credit Tag Chain Browser</title>
+<script type="text/javascript" src="./js2.0/jquery.min.js"></script>
+<script type="text/javascript" src="./js2.0/bootstrap.min.js"></script>
+<script type="text/javascript" src="./js2.0/bootstrap-table.min.js"></script>
+<script type="text/javascript" src="./js2.0/contractDetail.js"></script>
+<script type="text/javascript" src="./js2.0/base.js"></script>
+</head>
+<body class="pace-done"
+	style="background-image: url(./img2.0/list_background.png); background-size: cover">
+	<div class="pace  pace-inactive">
+		<div class="pace-progress" data-progress-text="100%"
+			data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
+			<div class="pace-progress-inner"></div>
+		</div>
+		<div class="pace-activity"></div>
+	</div>
+	<div class="wrapper">
+		<div>
+			<button type="button" class="navbar-toggle" data-toggle="collapse"
+				data-target=".navbar-responsive-collapse">
+				<span class="sr-only">Toggle navigation</span> <span
+					class="fa fa-bars"></span>
+			</button>
+		</div>
+		<div class="header clearFix">
+
+			<div class="leftlogo clearFix">
+				<div data-v-ebecfbba="" class="col-md-4">
+					<a href="https://www.credittag.io" style=""><img
+						style="padding: 10px 2px 5px 2px; width: 200px; margin-top: 20px;"
+						src="./img2.0/icon_logo.png" /></a>
+				</div>
+				<!--img-->
+			</div>
+			<div class="rightinput clearFix">
+				<div
+					class="collapse navbar-collapse mega-menu navbar-responsive-collapse navken">
+					<!--<div class="container ken-nav clearFix">-->
+					<ul class="nav navbar-nav nav1">
+						<li class=""><a href="javascript:void(0)">Home </a></li>
+						<li class=""><a href="javascript:void(0)">Credit Tag
+								Network </a></li>
+						<li class=""><a href="javascript:void(0)">Product </a></li>
+						<li class="active"><a href="javascript:void(0)">Browser </a></li>
+						<li class=""><a href="javascript:void(0)">Cooperative </a></li>
+						<li class=""><a href="javascript:void(0)">Contact </a></li>
+					</ul>
+				</div>
+
+				<div style="float: right; padding: 5px 0;"
+					class="inputsearch clearFix">
+					<input id="txtSearchInput" type="text"
+						class="form-control-custom ui-autocomplete-input"
+						placeholder="Block ID/Height、Transaction ID、Address"
+						maxlength="100"/>
+					<button class="btn-u" type="submit" id="searchInput">GO</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div data-v-ebecfbba="" class="container jumbotron">
+		<div data-v-33c84e3a="" data-v-748765d0="" class="container">
+			<div data-v-33c84e3a="" class="">
+				<div data-v-33c84e3a="" class="" style="">
+					<i class="fa fa-cubes"></i> &nbsp;Block#<span id="title"
+						th:text="${block.blockNum}"></span>
+				</div>
+				<table data-v-33c84e3a=""
+					style="word-break: break-all; word-wrap: break-word;"
+					class="table table-striped table-bordered no-margin">
+					<thead data-v-33c84e3a="" style="background-color: #F0F0F0;">
+						<tr data-v-33c84e3a="">
+						</tr>
+					</thead>
+					<tbody data-v-33c84e3a="">
+						<tr>
+							<td align="left">ID</td>
+							<td align="left" th:text="${block.blockId}"></td>
+							<td align="left"></td>
+							<td align="left"></td>
+						</tr>
+						<tr>
+							<td align="left">Number of Transactions</td>
+							<td align="left" id="transCount" th:text="${block.trxNum}"></td>
+							<td align="left">Block Size (Byte)</td>
+							<td align="left" id="blockSize" th:text="${block.blockSize}"></td>
+						</tr>
+						<tr class="trbg">
+							<td align="left">Amount of Transactions</td>
+							<td align="left" id="amount"><span
+								th:text="${block.amountBig}"></span>&nbsp;CTC</td>
+							<td align="left">Block Issuance Agent</td>
+							<td align="left" id="signee" th:text="${block.signee}"></td>
+						</tr>
+						<tr>
+							<td>Commission Charge</td>
+							<td id="fee"><span th:text="${block.feeBig}"></span>&nbsp;CTC</td>
+							<td align="left">Prev Block</td>
+							<td align="left" id="preId" th:if="${block.previous} ne'0000000000000000000000000000000000000000'"><a
+								th:href="@{block.do(blockId=${block.previous})}"
+								th:text="${block.previous}"></a></td>
+								<td align="left" id="preId" th:if="${block.previous} eq '0000000000000000000000000000000000000000'"><span
+								th:text="${block.previous}"></span></td>
+						</tr>
+						<tr class="trbg">
+							<td align="left">Block Issuance Time</td>
+							<td align="left" th:text="${block.blockTimeStr}"></td>
+							<td></td>
+							<td></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<div data-v-ebecfbba="" class="container jumbotron">
+		<div data-v-33c84e3a="" data-v-748765d0="" class="container">
+			<div data-v-33c84e3a="" class="">
+				<div data-v-33c84e3a="" class="" style="">
+					<span data-v-33c84e3a="" class="" style="">	<i class="fa fa-list-alt "></i>&nbsp;Contract
+						Overview</span>
+				</div>
+				<table data-v-33c84e3a=""
+					style="word-break: break-all; word-wrap: break-word;"
+					class="table table-striped table-bordered no-margin">
+					<thead data-v-33c84e3a="" style="background-color: #F0F0F0;">
+						<tr data-v-33c84e3a="">
+						</tr>
+					</thead>
+					<tbody data-v-33c84e3a="">
+						<tr>
+							<td align="left">Contract ID</td>
+							<td align="left" th:text="${contractInfo.contractId}"></td>
+							<td align="left"></td>
+							<td align="left"></td>
+						</tr>
+						<tr>
+							<td align="left">Name</td>
+							<td align="left" th:text="${contractInfo.name}"></td>
+							<td align="left">Status</td>
+							<td align="left" th:text="${contractInfo.statusStr}"></td>
+						</tr>
+						<tr class="trbg">
+							<td align="left">Contract Owner</td>
+							<td align="left" th:text="${contractInfo.ownerAddress}"></td>
+							<td align="left">Contract Balance</td>
+							<td align="left"><span th:text="${contractInfo.balanceBig}"></span>&nbsp;CTC</td>
+						</tr>
+						<tr>
+							<td align="left">Contract Bytecode Hash</td>
+							<td align="left"><span th:text="${contractInfo.hash}"></span></td>
+							<td align="left">Contract Description</td>
+							<td align="left" th:text="${contractInfo.description}"></td>
+						</tr>
+						<tr>
+							<td align="left">Function</td>
+							<td align="left">
+								<div th:each="summary:${contractInfo.abiList}">
+									<p th:text="${summary.abiName}" style="font-size: 14px;"></p>
+								</div>
+							</td>
+							<td align="left">Registration Time</td>
+							<td align="left" th:text="${contractInfo.regTimeStr}"></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<div data-v-748765d0="" class="main-container"
+		style="margin-top: 10px;">
+		<div data-v-33c84e3a="" data-v-748765d0="" class="container">
+			<div data-v-33c84e3a="" class="">
+				<div data-v-33c84e3a="" class="">
+					<div data-v-33c84e3a="" class="">
+						<span data-v-33c84e3a="" class="" style="margin-left: 15px;"><img
+							src="./img2.0/icon_record.png" style="width: 25px;" />&nbsp;Transaction</span>
+					</div>
+					<table id="tb_contract_detail" style="margin-top: 5px;"></table>
+				</div>
+			</div>
+		</div>
+		<div style="display: none" th:text="${contractInfo.contractId}"
+			id="contractId"></div>
+		<section data-v-68d71e31="" data-v-748765d0="" class="footer">
+			<div data-v-68d71e31="" class="footer-outer">
+				<div data-v-68d71e31="" class="footer-inner">
+					<div data-v-68d71e31="" class="text-center">
+						@2017-2018 Powered by Credit Tag Chain &nbsp;<a data-v-68d71e31=""
+							target="_blank" href=""></a>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</body>
+</html>
