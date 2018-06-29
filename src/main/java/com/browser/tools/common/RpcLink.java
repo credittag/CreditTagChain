@@ -44,4 +44,8 @@ public class RpcLink {
 	
 	
 	public static final String BLOCKCHAIN_LIST_ADDRESS_BALANCES = "blockchain_list_address_balances";
+	
+	public static final String INFO = "info";
+	
+	public static final String CONTRACT_CALL_OFFLINE = "contract_call_offline";
 }

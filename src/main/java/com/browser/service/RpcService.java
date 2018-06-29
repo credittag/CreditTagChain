@@ -81,5 +81,7 @@ public interface RpcService {
 	String getMultisigAccount(Integer required, JSONArray addresses) throws Exception;
 	
 	String getBalanceByAddress(String address) throws Exception;
+	String getBlockchainShareSupply() throws Exception;
 
+	String getContractCallOffline(String... distinguish) throws Exception;
 }

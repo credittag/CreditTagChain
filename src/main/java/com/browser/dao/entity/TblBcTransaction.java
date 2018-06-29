@@ -89,6 +89,7 @@ public class TblBcTransaction {
 	private String symbol;
 
 	private String voBalance; // 余额
+	
 
 	public String getVoBalance() {
 		return voBalance == null ? "" : voBalance.trim();

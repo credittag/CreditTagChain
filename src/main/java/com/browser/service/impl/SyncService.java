@@ -1,5 +1,6 @@
 package com.browser.service.impl;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -8,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
@@ -20,6 +22,7 @@ import com.browser.dao.entity.TblContractAbi;
 import com.browser.dao.entity.TblContractEvent;
 import com.browser.dao.entity.TblContractInfo;
 import com.browser.dao.entity.TblContractStorage;
+import com.browser.dao.entity.TblContractTokenInfo;
 import com.browser.dao.mapper.TblBcBlockMapper;
 import com.browser.dao.mapper.TblBcTransactionExMapper;
 import com.browser.dao.mapper.TblBcTransactionMapper;
@@ -41,6 +44,9 @@ public class SyncService {
 
     private static Logger logger = LoggerFactory.getLogger(SyncService.class);
 
+	@Value("${token.account}")
+	private String tokenAccount;
+    
     @Autowired
     private BlockService blockService;
 
@@ -181,10 +187,10 @@ public class SyncService {
                         	 throw new Exception("交易ID：" +trxStr+ " 的交易类型未知：" + firstOpType);
                          }
                 	}catch(Exception ex){
-                		logger.error("交易ID： "+trxStr+" 交易信息 解析失敗" + jsa);
+                		ex.printStackTrace();
+                		throw new Exception("交易ID： "+trxStr+" 交易信息 解析失敗" + jsa);
                 	}
                    
-
                 }else{
                 	throw new Exception("交易ID： "+trxStr+" 获取交易详情失败；");
                 }
@@ -261,7 +267,9 @@ public class SyncService {
         contractTrx.setFromAccount(entry.getString("from_account"));
         contractTrx.setFromAccountName(entry.getString("from_account_name"));
         contractTrx.setToAccount(entry.getString("to_account"));
-        contractTrx.setContractId(entry.getString("to_account"));
+       
+      //TODO  contractTrx.setContractId(entry.getString("to_account"));
+        
         contractTrx.setToAccountName(entry.getString("to_account_name"));
         contractTrx.setAmount(entry.getJSONObject("amount").getLong("amount"));
         contractTrx.setFee(entry.getJSONObject("fee").getLong("amount"));
@@ -299,6 +307,52 @@ public class SyncService {
                 contractInfo.setStatus(Constant.TEMP_STATE);
                 //注册合约balance为0
                 contractInfo.setBalance(0L);
+                
+                // 代币合约  
+                List<Object> params = new ArrayList<Object>();
+                params.add(contractInfo.getContractId()); // 合约ID
+                params.add(tokenAccount);
+                
+                
+                
+                //  资产代号
+                String tokenSymbol = null;
+                try{
+                	tokenSymbol = rpcService.getContractCallOffline(contractInfo.getContractId(),tokenAccount,"tokenSymbol","");
+                }catch(Exception ex){
+                	logger.warn(contractInfo.getContractId() + "不是代币合约");
+                	tokenSymbol = null;
+                }
+			    
+			
+                if(!StringUtils.isEmpty(tokenSymbol)){
+                	
+                	TblContractTokenInfo tblContractTokenInfo = new TblContractTokenInfo();
+                	tblContractTokenInfo.setContractId(contractInfo.getContractId());
+                	tblContractTokenInfo.setRegTime(contractInfo.getRegTime());
+                	tblContractTokenInfo.setBlockNum(contractInfo.getBlockNum());
+                	tblContractTokenInfo.setTokenSymbol(tokenSymbol);
+                	
+                	 String state  = rpcService.getContractCallOffline(contractInfo.getContractId(),tokenAccount, "state","");
+                	 tblContractTokenInfo.setContractState(state);
+                	 
+                	 String tokenName = rpcService.getContractCallOffline(contractInfo.getContractId(),tokenAccount, "tokenName","");
+                	 tblContractTokenInfo.setTokenName(tokenName);
+                	 
+                	 String precision = rpcService.getContractCallOffline(contractInfo.getContractId(),tokenAccount, "precision","");
+                	 tblContractTokenInfo.setPrecision(new BigDecimal(precision));
+                	 
+                	 String totalSupply = rpcService.getContractCallOffline(contractInfo.getContractId(),tokenAccount, "totalSupply","");
+                	 tblContractTokenInfo.setTotalSupply(new BigDecimal(totalSupply));
+                	 
+                	 String addminAddress = rpcService.getContractCallOffline(contractInfo.getContractId(),tokenAccount, "admin","");
+                	 tblContractTokenInfo.setAddminAddress(addminAddress);
+                	
+                	 contractInfo.setTblContractTokenInfo(tblContractTokenInfo);
+                }
+                
+                
+                
                 JSONArray abiArray = codePrintable.getJSONArray("abi");
                 if (abiArray != null && abiArray.size() > 0) {
                     List<TblContractAbi> abiList = new ArrayList<TblContractAbi>();
@@ -353,7 +407,7 @@ public class SyncService {
                 contractInfoUpdate.setContractId(entry.getString("to_account"));
                 contractInfoUpdate.setName(contractJsonUpdate.getString("contract_name"));
                 contractInfoUpdate.setDescription(contractJsonUpdate.getString("description"));
-                contractInfoUpdate.setBlockNum(contractTrx.getBlockNum());
+                //contractInfoUpdate.setBlockNum(contractTrx.getBlockNum());
                 contractInfoUpdate.setStatus(Constant.FOREVER_STATE);
                 contractInfoUpdate.setBlockNum(contractTrx.getBlockNum());
 
@@ -364,7 +418,7 @@ public class SyncService {
                 contractInfoDestory.setContractId(contractTrx.getToAccount());
                 contractInfoDestory.setBlockNum(contractTrx.getBlockNum());
                 contractInfoDestory.setStatus(Constant.DESTROY_STATE);
-                contractInfoDestory.setBlockNum(contractTrx.getBlockNum());
+                //contractInfoDestory.setBlockNum(contractTrx.getBlockNum());
                 realData.setUpdateContractInfo(contractInfoDestory);
                 break;
 

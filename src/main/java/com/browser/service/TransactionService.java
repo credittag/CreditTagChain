@@ -96,4 +96,6 @@ public interface TransactionService {
 	List<TblBcTransaction> queryContractTrx(TblBcTransaction transaction);
 	
 	String getBalanceByAddress(String address);
+
+	String getBlockchainShareSupply();
 }

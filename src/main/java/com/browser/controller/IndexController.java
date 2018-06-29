@@ -304,6 +304,15 @@ public class IndexController extends BaseController {
 		
 	}
 	
+	@RequestMapping("shareSupply")
+	@ResponseBody
+	public String getBlockchainShareSupply(Model model) {
+		
+		return transactionService.getBlockchainShareSupply();
+	
+	}
+	
+	
 	
 	@RequestMapping("testfy")
 	public String testfy() {

@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,7 +71,7 @@ public class RpcServiceImpl implements RpcService {
 	}
 	
 	@Override
-	public String send(String method, List<Object> params) throws Exception{
+	public synchronized String send(String method, List<Object> params) throws Exception{
 		String result = null;
 		long idSend = BlockchainTool.getId();
 		JSONObject sendObject = new JSONObject();
@@ -88,27 +89,29 @@ public class RpcServiceImpl implements RpcService {
 		PrintWriter os = null;
 		BufferedReader is = null;
 
-		//try {
-			// 获取链接
-			os = new PrintWriter(socket.getOutputStream());
-			is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			// 发送报文
-			os.println(sendMessage);
-			os.flush();
-	
-			// 获取报文
-			String returnMessage = is.readLine();
+		// 获取链接
+		os = new PrintWriter(socket.getOutputStream());
+		is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		// 发送报文
+		os.println(sendMessage);
+		os.flush();
 
-			JSONObject returnObject = JSONObject.parseObject(returnMessage);
-			long idReturn = returnObject.getLongValue("id");
+		// 获取报文
+		String returnMessage = is.readLine();
+
+		JSONObject returnObject = JSONObject.parseObject(returnMessage);
+		long idReturn = returnObject.getLongValue("id");
+
+		if (idSend != idReturn) {
+			throw new BrowserException("发送id和返回id不一致 " + returnMessage);
+		}
+		
+		if(StringUtils.isNotEmpty(returnObject.getString("error"))){
+			logger.error(returnObject.getString("error"));
+			throw new BrowserException("获取的数据异常" + returnObject.getString("error"));
+		}
 	
-			if (idSend != idReturn) {
-				throw new BrowserException("发送id和返回id不一致 " + returnMessage);
-			}
-			result = returnObject.getString("result");
-		//} catch (IOException e) {
-		//	e.printStackTrace();
-		//} 
+		result = returnObject.getString("result");
 		return result;
 	}
 
@@ -199,6 +202,23 @@ public class RpcServiceImpl implements RpcService {
 		params.add(address);
 		return send(RpcLink.BLOCKCHAIN_LIST_ADDRESS_BALANCES,params);
     }
+
+	@Override
+	public String getBlockchainShareSupply() throws Exception {
+		List<Object> params = new ArrayList<Object>();
+		return send(RpcLink.INFO,params);
+	}
+
+	@Override
+	public String getContractCallOffline(String... tparams) throws Exception {
+		List<Object> params = new ArrayList<Object>();
+		if(tparams != null){
+			for (String object : tparams) {
+				params.add(object);
+			}
+		}
+		return send(RpcLink.CONTRACT_CALL_OFFLINE,params);
+	}
 
 	
 }

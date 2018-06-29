@@ -20,7 +20,7 @@ public class Constant {
     public static final int TRX_TYPE_UPDATE_ACCOUNT = 5;
 
     //合约相关
-//注册合约
+    //注册合约
     public static final int TRX_TYPE_REGISTER_CONTRACT = 10;
     //合约充值 deposit
     public static final int TRX_TYPE_DEPOSIT_CONTRACT = 11;

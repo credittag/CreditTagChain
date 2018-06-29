@@ -17,10 +17,12 @@ import com.browser.dao.entity.TblBcBlock;
 import com.browser.dao.entity.TblBcTransaction;
 import com.browser.dao.entity.TblBcTransactionEx;
 import com.browser.dao.entity.TblContractInfo;
+import com.browser.dao.entity.TblContractTokenInfo;
 import com.browser.dao.mapper.TblContractAbiMapper;
 import com.browser.dao.mapper.TblContractEventMapper;
 import com.browser.dao.mapper.TblContractInfoMapper;
 import com.browser.dao.mapper.TblContractStorageMapper;
+import com.browser.dao.mapper.TblContractTokenInfoMapper;
 import com.browser.service.BlockService;
 import com.browser.service.RpcService;
 import com.browser.service.TransactionService;
@@ -56,6 +58,9 @@ public class CommonService {
 
     @Autowired
     private TblContractStorageMapper tblContractStorageMapper;
+    
+    @Autowired
+    private TblContractTokenInfoMapper tblContractTokenInfoMapper;
 
   
     public void clear(){
@@ -83,8 +88,13 @@ public class CommonService {
         //批量插入合约相关信息
         Set<TblContractInfo> contractInfoSet = realData.getRegisterContractInfo();
         if(contractInfoSet!=null){
+        	TblContractTokenInfo  tblContractTokenInfo = null;
             for(TblContractInfo register:contractInfoSet){
                 tblContractInfoMapper.insert(register);
+                 tblContractTokenInfo = register.getTblContractTokenInfo();
+                if(tblContractTokenInfo != null && !StringUtils.isEmpty(tblContractTokenInfo.getTokenSymbol())){
+                	tblContractTokenInfoMapper.insert(tblContractTokenInfo);
+                }
                 if(register.getAbiList()!=null && register.getAbiList().size()>0){
                     tblContractAbiMapper.insertBatch(register.getAbiList());
                 }

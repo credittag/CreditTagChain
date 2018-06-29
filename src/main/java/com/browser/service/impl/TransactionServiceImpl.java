@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,15 +19,18 @@ import com.browser.dao.entity.TblAsset;
 import com.browser.dao.entity.TblBcStatistics;
 import com.browser.dao.entity.TblBcTransaction;
 import com.browser.dao.entity.TblBcTransactionEx;
+import com.browser.dao.entity.TblContractTokenInfo;
 import com.browser.dao.mapper.TblBcStatisticsMapper;
 import com.browser.dao.mapper.TblBcTransactionExMapper;
 import com.browser.dao.mapper.TblBcTransactionMapper;
+import com.browser.dao.mapper.TblContractTokenInfoMapper;
 import com.browser.protocol.EUDataGridResult;
 import com.browser.service.RpcService;
 import com.browser.service.TransactionService;
 import com.browser.tools.Constant;
 import com.browser.tools.common.DateUtil;
 import com.browser.tools.common.StringUtil;
+import com.browser.utils.CtcBrowserUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 
@@ -49,9 +53,8 @@ public class TransactionServiceImpl implements TransactionService {
 	@Autowired
 	private RpcService socketService;
 
-
 	@Override
-	public String selectByTrxData() throws Exception{
+	public String selectByTrxData() throws Exception {
 		List<TblBcTransaction> trx = tblBcTransactionMapper.selectByTrxData();
 		if (null != trx && trx.size() > 0) {
 			for (TblBcTransaction tb : trx) {
@@ -107,7 +110,11 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public TblBcTransaction queryByTrxId(String trxId) {
 		TblBcTransaction result = tblBcTransactionMapper.queryByTrxId(trxId);
-
+		result.setAmountBig(new BigDecimal(result.getAmount()).divide(new BigDecimal(Constant.PRECISION)));
+		result.setSymbol("CTC");
+		String trxTypeStr = getTrxTypeStr(result.getTrxType());
+		result.setTrxTypeStr(trxTypeStr);
+		result.setFeeBig(new BigDecimal(result.getFee()).divide(new BigDecimal(Constant.PRECISION)));
 		// 查询扩展交易
 		if (result.getTrxType() != Constant.TRX_TYPE_TRANSFER) {
 			List<TblBcTransactionEx> transactionExList = tblBcTransactionExMapper.selectByOrigTrxId(result.getTrxId());
@@ -119,34 +126,37 @@ public class TransactionServiceImpl implements TransactionService {
 				result.setTransactionExList(transactionExList);
 			}
 		}
-		
-		// 调用合约,整理abi参数
-/*		if (result.getTrxType() == Constant.TRX_TYPE_CALL_CONTRACT) {
-			if (!StringUtils.isEmpty(result.getAbiParams())) {
-				String params = "";
-				if (result.getAbiParams().contains("{")) {
-					String jsonStr = result.getAbiParams().replace("'", "\"");
-					Map<String, Object> map = JSONObject.parseObject(jsonStr, Map.class);
-					for (Map.Entry<String, Object> entry : map.entrySet()) {
-						params = params + entry.getValue() + "|";
-					}
-					params = params.substring(0, params.length() - 1);
-				} else if (result.getAbiParams().contains(":")) {
-					params = result.getAbiParams().replace(":", "|");
-				} else {
-					params = result.getAbiParams();
-				}
-				result.setAbiParams(params);
-			}
-		}*/
-		String trxTypeStr = getTrxTypeStr(result.getTrxType());
-		result.setTrxTypeStr(trxTypeStr);
 
-		result.setAmountBig(new BigDecimal(result.getAmount()).divide(new BigDecimal(Constant.PRECISION)));
-		result.setFeeBig(new BigDecimal(result.getFee()).divide(new BigDecimal(Constant.PRECISION)));
+		// 是调用合约 并且是 转账
+		if (result.getTrxType() == Constant.TRX_TYPE_CALL_CONTRACT && StringUtils.equals("transfer", result.getCalledAbi())) {
+			if (!StringUtils.isEmpty(result.getAbiParams())) {
+				// 根据代币合约ID 获得 代币信息
+				TblContractTokenInfo tockenContractInfo = CtcBrowserUtil.getContractTokenInfo(result.getToAccount());
+				String tokenSymbol = "";
+				if (tockenContractInfo != null) {
+					tokenSymbol = tockenContractInfo.getTokenSymbol();
+				}
+
+				String[] split = result.getAbiParams().split(",");
+				if (split.length > 1) {
+					result.setAmountBig(new BigDecimal(split[1]));
+					result.setSymbol(tokenSymbol);
+
+					result.setTrxTypeStr(getTokenTrxType(tokenSymbol));
+				}
+			}
+		}
+
 		return result;
 	}
-	
+
+	// 代币 Transaction
+	public String getTokenTrxType(String symbol) {
+
+		return new StringBuffer().append(symbol).append("  ").append("Transfer").toString();
+
+	}
+
 	@Override
 	public void updateSelect() {
 		Long amountNum = tblBcTransactionMapper.selectByAmountNum();
@@ -155,14 +165,14 @@ public class TransactionServiceImpl implements TransactionService {
 		}
 		Integer num = tblBcTransactionMapper.selectByNum();
 		Long amountFee = tblBcTransactionMapper.selectByFee();
-		
+
 		Map<String, Object> params = new HashMap<String, Object>();
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		params.put("endDate", cal.getTime());
 		cal.add(Calendar.HOUR_OF_DAY, -1);
 		params.put("beginDate", cal.getTime());
-		
+
 		Integer hourNum = tblBcTransactionMapper.selectLashHour(params); // 返回最后一个小时的交易笔数
 		Integer hourMax = tblBcTransactionMapper.selectAll();
 
@@ -213,12 +223,27 @@ public class TransactionServiceImpl implements TransactionService {
 		List<TblBcTransaction> list = tblBcTransactionMapper.getTransactionList(transaction);
 		if (list != null && list.size() > 0) {
 			for (TblBcTransaction trx : list) {
+
 				String trxTypeStr = getTrxTypeStr(trx.getTrxType());
 				trx.setTrxTypeStr(trxTypeStr);
+
 				trx.setAmountBig(new BigDecimal(trx.getAmount()).divide(new BigDecimal(Constant.PRECISION)));
 				trx.setFeeBig(new BigDecimal(trx.getFee()).divide(new BigDecimal(Constant.PRECISION)));
 
 				trx.setVoAmountBig(new StringBuffer().append(new BigDecimal(trx.getAmount()).divide(new BigDecimal(Constant.PRECISION)).toPlainString()).toString());
+
+				// 代币 转账
+				if (trx.getTrxType() == Constant.TRX_TYPE_CALL_CONTRACT && StringUtils.equals("transfer", trx.getCalledAbi())) {
+					if (!StringUtils.isEmpty(trx.getAbiParams())) {
+						// 根据代币合约ID 获得 代币信息
+						TblContractTokenInfo tockenContractInfo = CtcBrowserUtil.getContractTokenInfo(trx.getToAccount());
+						String tokenSymbol = "";
+						if (tockenContractInfo != null) {
+							tokenSymbol = tockenContractInfo.getTokenSymbol();
+							trx.setTrxTypeStr(getTokenTrxType(tokenSymbol));
+						}
+					}
+				}
 			}
 		}
 		// 创建一个返回值对象
@@ -227,50 +252,40 @@ public class TransactionServiceImpl implements TransactionService {
 		result.setTotal(pageInfo.getTotal());
 		result.setPages(pageInfo.getPages());
 
-/*		// 从链上查询余额
-		if (!org.apache.commons.lang.StringUtils.isEmpty(transaction.getFromAccount())) {
-			
-			transaction.setVoBalance(getBalanceByAddress(transaction.getFromAccount()));
-		}*/
-		
 		return result;
 	}
-	
+
 	/**
-	  * @Title: getBalanceByAddress   
-	  * @Description: 根据地址 从链上查询余额
-	  * @param
-	  * @return String    返回类型   
-	  * @throws
+	 * @Title: getBalanceByAddress @Description: 根据地址 从链上查询余额 @param @return
+	 *         String 返回类型 @throws
 	 */
 	@Override
-	public String getBalanceByAddress(String address){
-		try{
-
+	public String getBalanceByAddress(String address) {
+		try {
 
 			// 获取余额信息
-			String balanceMsg = socketService.getBalanceByAddress(address); 
+			String balanceMsg = socketService.getBalanceByAddress(address);
 
 			JSONObject jsonObject = JSONObject.parseArray(balanceMsg).getJSONArray(0).getJSONObject(1);
-			
+
 			// 余额
 			String balance = jsonObject.getString("balance");
-			
+
 			// 资产ID
 			int assertId = jsonObject.getJSONObject("condition").getInteger("asset_id");
-			
+
 			// 根据资产id 获得资产对象
 			TblAsset symbolByAssetId = realData.getSymbolByAssetId(assertId);
-			
-			// 去除精度的（10的8次方）  余额
+
+			// 去除精度的（10的8次方） 余额
 			String voBalance = new BigDecimal(balance).divide(new BigDecimal(symbolByAssetId.getPrecision())).toPlainString();
 			return new StringBuffer(voBalance).append(" ").append(symbolByAssetId.getSymbol()).toString();
-		}catch(Exception e){
+		} catch (Exception e) {
 			logger.error("根据地址获取余额时出现错误：");
-			e.printStackTrace();	
+			e.printStackTrace();
 			return "";
 		}
-		
+
 	}
 
 	private String getTrxTypeStr(int trxType) {
@@ -278,7 +293,7 @@ public class TransactionServiceImpl implements TransactionService {
 		switch (trxType) {
 		case 1:
 			// 代理领工资
-			//trxTypeStr = "Agent Fee";
+			// trxTypeStr = "Agent Fee";
 			trxTypeStr = "Transaction Fee";
 			break;
 		case 2:
@@ -349,10 +364,7 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 	/**
-	 * @Title: getAllTransactionList
-	 * @Description: 交易列表（所有的）
-	 * @param
-	 * @throws
+	 * @Title: getAllTransactionList @Description: 交易列表（所有的） @param @throws
 	 */
 	@Override
 	public EUDataGridResult getAllTransactionList(TblBcTransaction transaction, Integer page, Integer rows) {
@@ -363,11 +375,26 @@ public class TransactionServiceImpl implements TransactionService {
 		if (list != null && list.size() > 0) {
 			for (TblBcTransaction trx : list) {
 				String trxTypeStr = getTrxTypeStr(trx.getTrxType());
+
 				trx.setTrxTypeStr(trxTypeStr);
+
 				trx.setAmountBig(new BigDecimal(trx.getAmount()).divide(new BigDecimal(Constant.PRECISION)));
 				trx.setFeeBig(new BigDecimal(trx.getFee()).divide(new BigDecimal(Constant.PRECISION)));
 
 				trx.setVoAmountBig(new BigDecimal(trx.getAmount()).divide(new BigDecimal(Constant.PRECISION)).toPlainString());
+				
+				// 代币 转账
+				if (trx.getTrxType() == Constant.TRX_TYPE_CALL_CONTRACT && StringUtils.equals("transfer", trx.getCalledAbi())) {
+					if (!StringUtils.isEmpty(trx.getAbiParams())) {
+						// 根据代币合约ID 获得 代币信息
+						TblContractTokenInfo tockenContractInfo = CtcBrowserUtil.getContractTokenInfo(trx.getToAccount());
+						String tokenSymbol = "";
+						if (tockenContractInfo != null) {
+							tokenSymbol = tockenContractInfo.getTokenSymbol();
+							trx.setTrxTypeStr(getTokenTrxType(tokenSymbol));
+						}
+					}
+				}
 			}
 		}
 		// 创建一个返回值对象
@@ -376,5 +403,25 @@ public class TransactionServiceImpl implements TransactionService {
 		result.setTotal(pageInfo.getTotal());
 		result.setPages(pageInfo.getPages());
 		return result;
+	}
+
+	@Override
+	public String getBlockchainShareSupply() {
+		try {
+			// info
+			String blockchainInfo = socketService.getBlockchainShareSupply();
+
+			JSONObject parseObject = JSONObject.parseObject(blockchainInfo);
+
+			String shareSupply = parseObject.getString("blockchain_share_supply");
+
+			String res = new BigDecimal(shareSupply).divide(new BigDecimal(Constant.PRECISION)).toPlainString();
+
+			return res;
+		} catch (Exception e) {
+			logger.error("获取CTC发行量错误");
+			e.printStackTrace();
+			return "";
+		}
 	}
 }
