@@ -1,5 +1,6 @@
 package com.browser.dao.mapper;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -128,4 +129,6 @@ public interface TblBcTransactionMapper {
 	List<TblBcTransaction> getAllTransactionList(TblBcTransaction transaction);
 
 	List<TblBcTransaction> getLineTransactionData(Map<String, Object> params);
+	//查询某个地址的余额
+	Map<String,BigDecimal> bourseAssureBalance(Map<String,String> map);
 }

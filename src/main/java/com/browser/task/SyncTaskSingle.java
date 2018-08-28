@@ -4,6 +4,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.browser.service.BlockService;
+import com.browser.service.RiskAddressReport;
 import com.browser.service.RpcService;
 import com.browser.service.impl.SyncService;
 
@@ -44,6 +47,8 @@ public class SyncTaskSingle {
     
     @Value("${system.syn.Scheduled}")
     private Boolean Scheduled;
+    
+ 
     
     @Scheduled(cron="0/5 * * * * ? ")
     public void syncData(){

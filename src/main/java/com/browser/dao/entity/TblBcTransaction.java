@@ -90,6 +90,17 @@ public class TblBcTransaction {
 
 	private String voBalance; // 余额
 	
+	//风险地址 from_account or to_account
+	private String riskAccountType;
+	
+
+	public String getRiskAccountType() {
+		return riskAccountType;
+	}
+
+	public void setRiskAccountType(String riskAccountType) {
+		this.riskAccountType = riskAccountType;
+	}
 
 	public String getVoBalance() {
 		return voBalance == null ? "" : voBalance.trim();

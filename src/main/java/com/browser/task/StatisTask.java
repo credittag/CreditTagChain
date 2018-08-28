@@ -24,7 +24,7 @@ public class StatisTask {
     @Autowired
     private StatisService statisService;
 
-    @Scheduled(cron="0/30 * * * * ? ")
+    @Scheduled(cron="0/5 * * * * ? ")
     public void hourStatic(){
         try {
             transactionService.updateSelect();
@@ -34,7 +34,7 @@ public class StatisTask {
 
     }
 
-    @Scheduled(cron="0/10 * * * * ? ")
+    @Scheduled(cron="0/5 * * * * ? ")
     public void newBlockStatic(){
         try {
             statisService.newBlockStatic();
@@ -43,7 +43,7 @@ public class StatisTask {
         }
     }
 
-    @Scheduled(cron="0/10 * * * * ? ")
+    @Scheduled(cron="0/5 * * * * ? ")
     public void newTransactionStatic(){
         try {
             statisService.newTransactionStatic();

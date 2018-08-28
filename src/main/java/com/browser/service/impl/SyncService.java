@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.annotation.Resource;
+
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ import com.browser.dao.mapper.TblContractEventMapper;
 import com.browser.dao.mapper.TblContractInfoMapper;
 import com.browser.dao.mapper.TblContractStorageMapper;
 import com.browser.service.BlockService;
+import com.browser.service.RiskAddressReport;
 import com.browser.service.RpcService;
 import com.browser.tools.Constant;
 import com.browser.tools.common.StringUtil;
@@ -79,6 +82,9 @@ public class SyncService {
 
     @Autowired
     private TblContractStorageMapper tblContractStorageMapper;
+    
+    @Resource
+    private RiskAddressReport riskAddressReport;
 
 	//private Socket socket = null;
 	
@@ -132,6 +138,8 @@ public class SyncService {
                              trx.setTrxTime(bc.getBlockTime());
 
                              amount = amount + trx.getAmount();
+                             //验证交易地址是否为风险地址
+                             riskAddressReport.RiskAddressVerify(trx);
                              transactionList.add(trx);
                              if (trx.getTransactionExList() != null && trx.getTransactionExList().size() > 0) {
                                  transactionExList.addAll(trx.getTransactionExList());
@@ -145,6 +153,8 @@ public class SyncService {
                              trx.setTrxType(1);  // 领工资
                              
                              amount = amount + trx.getAmount();
+                           //验证交易地址是否为风险地址
+                             riskAddressReport.RiskAddressVerify(trx);
                              transactionList.add(trx);
                          	
                          }else if("register_account_op_type".equals(firstOpType)){
@@ -164,6 +174,8 @@ public class SyncService {
                               }
 
                               amount = amount + trx.getAmount();
+                            //验证交易地址是否为风险地址
+                              riskAddressReport.RiskAddressVerify(trx);
                               transactionList.add(trx);
                          	
                          }else if("withdraw_op_type".equals(firstOpType)){//普通 交易
@@ -182,6 +194,8 @@ public class SyncService {
                              }
 
                              amount = amount + trx.getAmount();
+                           //验证交易地址是否为风险地址
+                             riskAddressReport.RiskAddressVerify(trx);
                              transactionList.add(trx);
                          }else{
                         	 throw new Exception("交易ID：" +trxStr+ " 的交易类型未知：" + firstOpType);
